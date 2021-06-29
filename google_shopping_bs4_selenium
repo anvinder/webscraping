@@ -1,0 +1,26 @@
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
+import requests
+from bs4 import BeautifulSoup
+driver = webdriver.Chrome('C:\\Program Files (x86)\\Google\\chromedriver.exe')
+text_search = 'iphone 12 mini'
+base_site = 'https://shopping.google.com'
+
+response = requests.get(base_site)
+print(response)
+html = response.content
+# print(html)
+soup = BeautifulSoup(html, 'lxml')
+
+driver.get(base_site)
+if 'google' in base_site:
+    driver.find_element_by_xpath('//*[@id="REsRA"]').send_keys(text_search)
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="kO001e"]/c-wiz/form/div[2]/div[2]/ul/li[1]/div/div[1]'))).click()
+    # divs = soup.find('a', {'class': 'CaGdPb ixf2Ic'})['href']
+    divs = soup.find_all('a', {'class': 'CaGdPb ixf2Ic', 'href': True})
+    for div in divs:
+    #if divs in link:
+        print(div['href'])
