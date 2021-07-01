@@ -1,0 +1,35 @@
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
+from bs4 import BeautifulSoup
+import requests
+import json
+
+driver = webdriver.Chrome('C:\\Program Files (x86)\\Google\\chromedriver.exe')
+text_search = 'sony a6400'
+base_site = 'https://amazon.com'
+headerss = {  # <-- so the Google will treat your script as a "real" user browser.
+    "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.19582"
+}
+
+driver.get(base_site)
+if 'amazon' in base_site:
+    driver.find_element_by_xpath('//*[@id="twotabsearchtextbox"]').send_keys(text_search)
+    driver.find_element_by_id('nav-search-submit-button').click()
+    new_url = driver.current_url
+    response = requests.get(new_url, headers=headerss).text
+    soup = BeautifulSoup(response, 'lxml')
+    data = []
+    for container in soup.findAll('div', attrs={'data-asin':'B07MV3P7M8'}):
+        title = container.find('h2', class_='a-size-mini a-spacing-none a-color-base s-line-clamp-2')
+        price = container.find('span', class_='a-offscreen').text
+        reviews = container.find('span', class_='a-size-base').text
+        data.append({
+        "Title": title,
+        "Price": price,
+        "Supplier": reviews,
+      })
+    print(json.dumps(data, indent=2, ensure_ascii=False))
