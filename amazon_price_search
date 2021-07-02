@@ -9,27 +9,34 @@ import json
 
 driver = webdriver.Chrome('C:\\Program Files (x86)\\Google\\chromedriver.exe')
 text_search = 'sony a6400'
-base_site = 'https://amazon.com'
+base_site = 'https://www.amazon.com'
 headerss = {  # <-- so the Google will treat your script as a "real" user browser.
     "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.19582"
 }
+headersa = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0'}
 
 driver.get(base_site)
+
 if 'amazon' in base_site:
     driver.find_element_by_xpath('//*[@id="twotabsearchtextbox"]').send_keys(text_search)
     driver.find_element_by_id('nav-search-submit-button').click()
     new_url = driver.current_url
     response = requests.get(new_url, headers=headerss).text
-    soup = BeautifulSoup(response, 'lxml')
+    #soup = BeautifulSoup(response, 'lxml')
+    soup = BeautifulSoup(driver.page_source, 'lxml')
     data = []
-    for container in soup.findAll('div', attrs={'data-asin':'B07MV3P7M8'}):
-        title = container.find('h2', class_='a-size-mini a-spacing-none a-color-base s-line-clamp-2')
-        price = container.find('span', class_='a-offscreen').text
-        reviews = container.find('span', class_='a-size-base').text
+    results = soup.find_all('div', {'data-component-type':'s-search-result'})
+    for container in results:
+        title = container.find('span', class_='a-size-medium a-color-base a-text-normal').text
+        price = container.find('span', class_='a-price-whole').text
+        review = container.find('div', class_='a-section a-spacing-none a-spacing-top-micro').text
+
         data.append({
-        "Title": title,
-        "Price": price,
-        "Supplier": reviews,
-      })
+            "Title": title,
+            "Price": price,
+            "Supplier": review,
+        })
     print(json.dumps(data, indent=2, ensure_ascii=False))
+
+
