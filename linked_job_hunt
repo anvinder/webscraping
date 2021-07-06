@@ -1,0 +1,30 @@
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+
+def get_driver():
+    options = Options()
+    options.add_argument("user-data-dir=C:\\Users\\anvin\\AppData\\Local\\Google\\Chrome\\User Data")
+    path = 'C:\\Program Files (x86)\\Google\\chromedriver.exe'
+    driver = webdriver.Chrome(path, options=options)
+    text_search = 'Product Development Engineer'
+    base_site = 'https://www.linkedin.com'
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
+            "70.0.3538.102 Safari/537.36 Edge/18.19582"}
+    driver.get(base_site)
+    #job_search(driver, text_search)
+
+
+#def job_search(driver, text_search):
+    elem =driver.find_element_by_xpath('//*[@id="ember19"]/input').send_keys(text_search)
+    #WebDriverWait(driver, 20).until(EC._find_element((By.XPATH, '//*[@id="ember19"]/input')))
+    elem.send_keys(Keys.ENTER)
+
+
+if __name__ == "__main__":
+    get_driver()
+
