@@ -17,6 +17,7 @@ def get_driver():
     text_search = 'Product Development Engineer'
     location_search = 'california'
     base_site = 'https://www.linkedin.com/jobs'
+    #base_site = 'https://www.linkedin.com/jobs/search/?geoId=102095887&keywords=Product%20Development%20Engineer&location=California%2C%20United%20States'
     headerss = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
             "70.0.3538.102 Safari/537.36 Edge/18.19582"}
     driver.get(base_site)
@@ -29,6 +30,9 @@ def get_driver():
         search_location.send_keys(location_search)
         sleep(1)
         search_location.send_keys(Keys.RETURN)
+        WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="search-reusables__filters-bar"]/div/div'))).click()
+        #filter_data = driver.find_elements_by_class_name('search-reusables__secondary-filters-values')
+
     except Exception as e:
         print(e)
 
