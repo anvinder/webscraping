@@ -21,18 +21,16 @@ def get_driver():
             "70.0.3538.102 Safari/537.36 Edge/18.19582"}
     driver.get(base_site)
     try:
-        #driver.find_element_by_xpath('//*[@id="global-nav-search"]').send_keys(text_search)  # added this to keep chrome open
         search_bars = driver.find_elements_by_class_name('jobs-search-box__text-input')
         search_keywords = search_bars[0]
         search_keywords.send_keys(text_search)
-        sleep(2)
-        search_keywords.send_keys(Keys.RETURN)
-
+        sleep(1)
+        search_location = search_bars[3]
+        search_location.send_keys(location_search)
+        sleep(1)
+        search_location.send_keys(Keys.RETURN)
     except Exception as e:
         print(e)
-# jobs-search-box__input jobs-search-box__input--keyword
-# jobs-search-box__input jobs-search-box__input--location
-#
 
 if __name__ == "__main__":
     get_driver()
