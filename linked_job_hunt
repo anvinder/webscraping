@@ -5,6 +5,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+import requests
+from bs4 import BeautifulSoup
 
 def get_driver():
     options = Options()
@@ -13,12 +15,22 @@ def get_driver():
     options.add_experimental_option("detach", True)
     driver = webdriver.Chrome(path, options=options)
     text_search = 'Product Development Engineer'
-    base_site = 'https://www.linkedin.com'
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
+    location_search = 'california'
+    base_site = 'https://www.linkedin.com/jobs'
+    headerss = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
             "70.0.3538.102 Safari/537.36 Edge/18.19582"}
     driver.get(base_site)
-    driver.find_element_by_xpath('//*[@id="ember19"]/input').send_keys(text_search) # added this to keep chrome open
+    try:
+        #driver.find_element_by_xpath('//*[@id="global-nav-search"]').send_keys(text_search)  # added this to keep chrome open
+        search_bars = driver.find_elements_by_class_name('jobs-search-box__text-input')
+        search_keywords = search_bars[0]
+        search_keywords.send_keys(text_search)
 
+    except Exception as e:
+        print(e)
+# jobs-search-box__input jobs-search-box__input--keyword
+# jobs-search-box__input jobs-search-box__input--location
+#
 
 if __name__ == "__main__":
     get_driver()
