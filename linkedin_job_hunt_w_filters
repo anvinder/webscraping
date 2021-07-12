@@ -7,8 +7,8 @@ from selenium.webdriver.common.keys import Keys
 import requests
 from bs4 import BeautifulSoup
 from time import sleep
-import json
 from urllib.parse import urljoin
+
 
 def get_driver():
     options = Options()
@@ -19,75 +19,103 @@ def get_driver():
     text_search = 'Product Development Engineer'
     location_search = 'california'
     base_site = 'https://www.linkedin.com/jobs'
-    # base_site = 'https://www.linkedin.com/jobs/search/?currentJobId=2630799915&f_E=2%2C3%2C4&f_JT=F&f_SB2=3&f_TPR=r604800&geoId=102095887&keywords=product%20development%20engineer&location=California%2C%20United%20States&sortBy=R'
-    headerss = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
+    # base_site = 'https://www.linkedin.com/jobs/search/?currentJobId=2630799915&f_E=2%2C3%2C4&f_JT=F&f_SB2=3&f_TPR=r60
+    # 4800&geoId=102095887&keywords=product%20development%20engineer&location=California%2C%20United%20States&sortBy=R'
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
             "70.0.3538.102 Safari/537.36 Edge/18.19582"}
     driver.get(base_site)
+    enter_title_location(driver, text_search, location_search)
+    filter_jobs(driver)
+    parsing_job_data(driver, base_site, headers)
+
+
+def enter_title_location(driver, text_search, location_search):
+    search_bars = driver.find_elements_by_class_name('jobs-search-box__text-input')
+    search_keywords = search_bars[0]    # to enter job title
+    # search_bars.clear()
+    search_keywords.send_keys(text_search)
+    sleep(1)
+    search_location = search_bars[3]    # To enter location
+    search_location.clear()
+    search_location.send_keys(location_search)
+    sleep(1)
+    search_location.send_keys(Keys.RETURN)  # Hit Enter after entering title and location.
+
+
+def filter_jobs(driver):
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="search-reusables__filters-'
+                                                                          'bar"]/div/div'))).click()   # All Filters
+    sleep(3)
+    past_week = '/html/body/div[3]/div/div/div[2]/ul/li[2]/fieldset/div/ul/li[3]/label/p/span'
+    past_week = driver.find_element(by='xpath', value=past_week)
+    past_week.click()
+    experience_entry_level = '/html/body/div[3]/div/div/div[2]/ul/li[3]/fieldset/div/ul/li[2]/label/p/span'
+    experience_associate_level = '/html/body/div[3]/div/div/div[2]/ul/li[3]/fieldset/div/ul/li[3]/label/p/span'
+    experience_mid_senior_level = '/html/body/div[3]/div/div/div[2]/ul/li[3]/fieldset/div/ul/li[4]/label/p/span'
+    entry_job_type = driver.find_element(by='xpath', value=experience_entry_level)
+    associate_job_type = driver.find_element(by='xpath', value=experience_associate_level)
+    mid_senior_job_type = driver.find_element(by='xpath', value=experience_mid_senior_level)
+    entry_job_type.click()
+    associate_job_type.click()
+    mid_senior_job_type.click()
+    job_type = '/html/body/div[3]/div/div/div[2]/ul/li[5]/fieldset/div/ul/li[1]/label/p/span'
+    job_type = driver.find_element(by='xpath', value=job_type)
+    job_type.click()
+    salary = '/html/body/div[3]/div/div/div[2]/ul/li[15]/fieldset/div/ul/li[3]/label/p/span'
+    salary = driver.find_element(by='xpath', value=salary)
+    salary.click()
+    sleep(1)
+    driver.find_element_by_xpath('/html/body/div[3]/div/div/div[3]/div/button[2]').click()  # If filter(show results)
+
+
+def parsing_job_data(driver, base_site, headers):
+    company_details = ''
+    no_applications = ''
+    complete_url = ''
+    job_details = ''
     try:
-        search_bars = driver.find_elements_by_class_name('jobs-search-box__text-input')
-        search_keywords = search_bars[0]
-        # search_bars.clear()
-        search_keywords.send_keys(text_search)
-        sleep(1)
-        search_location = search_bars[3]
-        search_location.clear()
-        search_location.send_keys(location_search)
-        sleep(1)
-        search_location.send_keys(Keys.RETURN)
-        WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="search-reusables__filters-'
-                                                                              'bar"]/div/div'))).click()   # All Filters
-        sleep(3)
-        past_week = '/html/body/div[3]/div/div/div[2]/ul/li[2]/fieldset/div/ul/li[3]/label/p/span'
-        past_week = driver.find_element(by='xpath', value=past_week)
-        past_week.click()
-        experience_entry_level = '/html/body/div[3]/div/div/div[2]/ul/li[3]/fieldset/div/ul/li[2]/label/p/span'
-        experience_associate_level = '/html/body/div[3]/div/div/div[2]/ul/li[3]/fieldset/div/ul/li[3]/label/p/span'
-        experience_mid_senior_level = '/html/body/div[3]/div/div/div[2]/ul/li[3]/fieldset/div/ul/li[4]/label/p/span'
-        entry_job_type = driver.find_element(by='xpath', value=experience_entry_level)
-        associate_job_type = driver.find_element(by='xpath', value=experience_associate_level)
-        mid_senior_job_type = driver.find_element(by='xpath', value=experience_mid_senior_level)
-        entry_job_type.click()
-        associate_job_type.click()
-        mid_senior_job_type.click()
-        job_type = '/html/body/div[3]/div/div/div[2]/ul/li[5]/fieldset/div/ul/li[1]/label/p/span'
-        job_type = driver.find_element(by='xpath', value=job_type)
-        job_type.click()
-        salary = '/html/body/div[3]/div/div/div[2]/ul/li[15]/fieldset/div/ul/li[3]/label/p/span'
-        salary = driver.find_element(by='xpath', value=salary)
-        salary.click()
-        sleep(1)
-        driver.find_element_by_xpath('/html/body/div[3]/div/div/div[3]/div/button[2]').click()  # to click on 'show results' option if filter is used
         new_url = driver.current_url
-        response = requests.get(new_url, headers=headerss).text
+        response = requests.get(new_url, headers=headers).text
         soup = BeautifulSoup(driver.page_source, 'lxml')
-        data = []
-        results = soup.find_all('div', class_="job-card-container relative job-card-list job-card-container--clickable job-card-list--underline-title-on-hover jobs-search-results-list__list-item--active jobs-search-two-pane__job-card-container--viewport-tracking-0")
-        full_page = soup.find_all('div', {'class': 'jobs-details__main-content jobs-details__main-content--single-pane full-width'})
+        results = soup.find_all('div', class_="job-card-container relative job-card-list job-card-container--clickable "
+                                              "job-card-list--underline-title-on-hover jobs-search-results-list__list-"
+                                              "item--active jobs-search-two-pane__job-card-container--viewport-tracking"
+                                              "-0")
+        full_page = soup.find_all('div', {'class': 'jobs-details__main-content jobs-details__main-content--single-pane '
+                                                   'full-width'})
 
         for container in results:
-            job_title = container.find('a', class_='disabled ember-view job-card-container__link job-card-list__title').text
-            #Company = container.find('a', class_='job-card-container__link job-card-container__company-name ember-view').text
+            job_title = container.find('a', class_='disabled ember-view job-card-container__link job-card-list__'
+                                                   'title').text
             location = container.find('li', class_='job-card-container__metadata-item').text
-            #print(Company.strip())
+            # print(Company.strip())
             job_title = job_title.strip()
             location = location.strip()
-        employees = driver.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div/div/section[2]/div/div/div[1]/div/div[1]/div/div[2]/div[2]/div[2]/span').text
-        print(employees)
-        no_applications = driver.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div/div/section[2]/div/div/div[1]/div/div[1]/div/div[2]/div[1]').text
-        print(no_applications)
-        data = []
+        company_details = driver.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div/div/section[2]/div/div/'
+                                                 'div[1]/div/div[1]/div/div[2]/div[2]/div[2]/span').text
+        # print(company_details)
+        no_applications = driver.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div/div/section[2]/div/'
+                                                       'div/div[1]/div/div[1]/div/div[2]/div[1]').text
+        # print(no_applications)
         top_right_pane_only = soup.find_all('div', attrs={'class': 'jobs-unified-top-card__content--two-pane'})
         for links in top_right_pane_only:
             partial_apply_link = links.find('a')['href']
             complete_url = urljoin(base_site, partial_apply_link)
-            print(complete_url)
+            # print(complete_url)
 
-        details = driver.find_element_by_xpath('//*[@id="job-details"]/span').text
-        print(details)
+        job_details = driver.find_element_by_xpath('//*[@id="job-details"]/span').text
+        # print(job_details)
     except Exception as e:
         print(e)
+    print_data(company_details, no_applications, complete_url, job_details)
+
+
+def print_data(company_details, no_applications, complete_url, job_details):
+    print(company_details)
+    print(no_applications)
+    print(complete_url)
+    print(job_details)
 
 
 if __name__ == "__main__":
     get_driver()
-
