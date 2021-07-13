@@ -1,0 +1,90 @@
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from bs4 import BeautifulSoup
+import requests
+import json
+base_site = ['https://shopping.google.com', 'https://www.amazon.com']
+text_search = 'iphone mini 12 128GB black'
+
+
+def basic_setup():
+    soup1 = ''
+    soup2 = ''
+    driver = webdriver.Chrome('C:\\Program Files (x86)\\Google\\chromedriver.exe')
+    headerss = {  # <-- so the Google will treat the script as a "real" user browser.
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
+                      "70.0.3538.102 Safari/537.36 Edge/18.19582"
+    }
+    for item in base_site:
+        driver.get(item)
+        if 'google' in item:
+            driver.find_element_by_xpath('//*[@id="REsRA"]').send_keys(text_search)
+            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="kO001e"]/c-wiz/form/div[2]/'
+                                                                                  'div[2]/ul/li[1]/div/'
+                                                                                  'div[1]'))).click()
+            new_url = driver.current_url
+            response = requests.get(new_url, headers=headerss).text
+            soup1 = BeautifulSoup(response, 'lxml')
+
+        if 'amazon' in item:
+            driver.find_element_by_xpath('//*[@id="twotabsearchtextbox"]').send_keys(text_search)
+            driver.find_element_by_id('nav-search-submit-button').click()
+            new_url = driver.current_url
+            # response = requests.get(new_url, headers=headerss).text
+            soup2 = BeautifulSoup(driver.page_source, 'lxml')
+
+        if 'newegg' in item:
+            driver.find_element_by_xpath('//*[@id="app"]/header/div[1]/div[3]/div[1]/form/div/div[1]/input').\
+                send_keys(text_search)
+            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="app"]/header/div[1]/div[3]/'
+                                                                                  'div[1]/form/div/div[2]/'
+                                                                                  'button'))).click()
+
+    show_results(soup1, soup2)
+
+
+def show_results(soup1, soup2):
+    data = []
+    for item in base_site:
+        try:
+            if 'google' in item:
+                print('showing results from Google Shopping')
+                for container in soup1.findAll(True, {'class': ['sh-dlr__content xal5Id',
+                                                                'sh-dgr__gr-auto sh-dgr__grid-result',
+                                                               'sh-dlr__list-result']}, limit=5):
+                    if container.find('h3'):
+                        title = container.find('h3').text
+                    else:
+                        title = container.find('h4').text
+                    price = container.find('span', class_='a8Pemb').text
+                    supplier = container.find(['div', 'span'], {'class': ['b07ME mqQL1e', 'aULzUe IuHnof']}).text
+                    data.append({
+                      "Title": title,
+                      "Price": price,
+                      "Supplier": supplier,
+                    })
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+
+            if 'amazon' in item:
+                print('showing results from Amazon')
+                results = soup2.find_all('div', {'data-component-type': 's-search-result'}, limit=5)
+                for container in results:
+                    title = container.find('span', class_='a-size-medium a-color-base a-text-normal').text
+                    price = container.find('span', class_='a-offscreen').text
+                    review = container.find('div', class_='a-section a-spacing-none a-spacing-top-micro').text
+
+                    data.append({
+                        "Title": title,
+                        "Price": price,
+                        "Supplier": review,
+                    })
+
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+        except Exception as e:
+            print(e)
+
+
+if __name__ == "__main__":
+    basic_setup()
