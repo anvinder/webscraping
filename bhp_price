@@ -1,0 +1,56 @@
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
+import requests
+import json
+from bs4 import BeautifulSoup
+text_search = 'viewsonic x10-4ke'
+base_site = ['https://www.bhphotovideo.com']
+
+
+def basic_setup():
+    soup = ''
+    response = ''
+    driver = webdriver.Chrome('C:\\Program Files (x86)\\Google\\chromedriver.exe')
+    #headerss = {  # <-- so the Google will treat the script as a "real" user browser.
+    #    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
+    #                  "70.0.3538.102 Safari/537.36 Edge/18.19582"
+    #}
+    headerss = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:66.0) Gecko/20100101 Firefox/66.0",
+               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+               "Accept-Language": "en-US,en;q=0.5", "Accept-Encoding": "gzip, deflate", "DNT": "1",
+               "Connection": "close", "Upgrade-Insecure-Requests": "1"}
+    for item in base_site:
+        driver.get(item)
+        if 'bhp' in item:
+            driver.find_element_by_xpath('//*[@id="top-search-input"]').send_keys(text_search)
+            driver.find_element_by_xpath('//*[@id="header"]/section[1]/div[1]/form/p/button').click()
+            # driver.find_elements_by_partial_link_text(text_search)
+            new_url = driver.current_url
+            response = requests.get(new_url, headers=headerss).text
+            soup = BeautifulSoup(response, 'lxml')
+    show_results(soup, driver, response)
+
+
+def show_results(soup, driver, response):
+    data = []
+    try:
+        for container in soup.findAll('div', {'data-selenium': ['miniProductPageProduct']}, limit=2):
+            title = container.find("span", {'data-selenium': "miniProductPageProductName"}).text
+            price = container.find("span", {"data-selenium": "uppedDecimalPriceFirst"}).text
+            rating = container.find("div", {"data-selenium": "miniProductPageProductRatingSection"}).text
+            data.append({
+                "Title": title,
+                "Price": price,
+                "Rating": rating
+            })
+
+    except Exception as e:
+        print(e)
+    print(json.dumps(data, indent=2, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    basic_setup()
