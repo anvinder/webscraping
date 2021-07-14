@@ -5,18 +5,23 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import requests
 import json
-base_site = ['https://shopping.google.com', 'https://www.amazon.com']
-text_search = 'iphone mini 12 128GB black'
+from selenium.webdriver.common.action_chains import ActionChains
+base_site = ['https://shopping.google.com', 'https://www.amazon.com',
+             'https://www.newegg.com']
+text_search = 'viewsonic x10-4ke'
 
 
 def basic_setup():
-    soup1 = ''
-    soup2 = ''
+    soup_google = ''
+    soup_amazon = ''
+    soup_newegg = ''
+    soup_bhp = ''
     driver = webdriver.Chrome('C:\\Program Files (x86)\\Google\\chromedriver.exe')
     headerss = {  # <-- so the Google will treat the script as a "real" user browser.
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
                       "70.0.3538.102 Safari/537.36 Edge/18.19582"
     }
+
     for item in base_site:
         driver.get(item)
         if 'google' in item:
@@ -24,36 +29,46 @@ def basic_setup():
             WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="kO001e"]/c-wiz/form/div[2]/'
                                                                                   'div[2]/ul/li[1]/div/'
                                                                                   'div[1]'))).click()
-            new_url = driver.current_url
-            response = requests.get(new_url, headers=headerss).text
-            soup1 = BeautifulSoup(response, 'lxml')
+            new_url_google = driver.current_url
+            response_google = requests.get(new_url_google, headers=headerss).text
+            soup_google = BeautifulSoup(response_google, 'lxml')
 
         if 'amazon' in item:
             driver.find_element_by_xpath('//*[@id="twotabsearchtextbox"]').send_keys(text_search)
             driver.find_element_by_id('nav-search-submit-button').click()
-            new_url = driver.current_url
-            # response = requests.get(new_url, headers=headerss).text
-            soup2 = BeautifulSoup(driver.page_source, 'lxml')
+            soup_amazon = BeautifulSoup(driver.page_source, 'lxml')
 
         if 'newegg' in item:
-            driver.find_element_by_xpath('//*[@id="app"]/header/div[1]/div[3]/div[1]/form/div/div[1]/input').\
+            driver.find_element_by_xpath('//*[@id="app"]/header/div[1]/div[3]/div[1]/form/div/div[1]/input'). \
                 send_keys(text_search)
-            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="app"]/header/div[1]/div[3]/'
-                                                                                  'div[1]/form/div/div[2]/'
+            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="app"]/header/div[1]/'
+                                                                                  'div[3]/div[1]/form/div/div[2]/'
                                                                                   'button'))).click()
+            new_url_newegg = driver.current_url
+            response_newegg = requests.get(new_url_newegg, headers=headerss).text
+            soup_newegg = BeautifulSoup(response_newegg, 'lxml')
 
-    show_results(soup1, soup2)
+        if 'bhp' in item:
+            driver.find_element_by_xpath('//*[@id="top-search-input"]').send_keys(text_search)
+            driver.find_element_by_xpath('//*[@id="header"]/section[1]/div[1]/form/p/button').click()
+            new_url_bhp = driver.current_url
+            response_bhp = requests.get(new_url_bhp, headers=headerss).text
+            soup_bhp = BeautifulSoup(response_bhp, 'lxml')
+
+    show_results(soup_google, soup_amazon, soup_newegg, soup_bhp, driver)
 
 
-def show_results(soup1, soup2):
+def show_results(soup_google, soup_amazon, soup_newegg, soup_bhp, driver):
     data = []
+    num_results = 1
     for item in base_site:
         try:
             if 'google' in item:
                 print('showing results from Google Shopping')
-                for container in soup1.findAll(True, {'class': ['sh-dlr__content xal5Id',
+                google_search_results = soup_google.findAll(True, {'class': ['sh-dlr__content xal5Id',
                                                                 'sh-dgr__gr-auto sh-dgr__grid-result',
-                                                               'sh-dlr__list-result']}, limit=5):
+                                                               'sh-dlr__list-result']}, limit=num_results)
+                for container in google_search_results:
                     if container.find('h3'):
                         title = container.find('h3').text
                     else:
@@ -65,13 +80,13 @@ def show_results(soup1, soup2):
                       "Price": price,
                       "Supplier": supplier,
                     })
-            print(json.dumps(data, indent=2, ensure_ascii=False))
+                # print(json.dumps(data, indent=2, ensure_ascii=False))
 
             if 'amazon' in item:
                 print('showing results from Amazon')
-                results = soup2.find_all('div', {'data-component-type': 's-search-result'}, limit=5)
+                results = soup_amazon.find_all('div', {'data-component-type': 's-search-result'}, limit=num_results)
                 for container in results:
-                    title = container.find('span', class_='a-size-medium a-color-base a-text-normal').text
+                    title = container.find('span', class_='a-size-medium a-color-base a-text-normal').text[0:125]
                     price = container.find('span', class_='a-offscreen').text
                     review = container.find('div', class_='a-section a-spacing-none a-spacing-top-micro').text
 
@@ -80,10 +95,35 @@ def show_results(soup1, soup2):
                         "Price": price,
                         "Supplier": review,
                     })
-
-            print(json.dumps(data, indent=2, ensure_ascii=False))
+                # print(json.dumps(data, indent=2, ensure_ascii=False))
+            if 'newegg' in item:
+                print('showing results from NewEgg')
+                newegg_results = soup_newegg.findAll('div', {'class': ['item-container']}, limit=num_results)
+                for container in newegg_results:
+                    title = container.find('div', {'class': ['item-title', 'item-info']}).text[0:125]
+                    price = container.find("ul", {"class": "price"}).text.strip()
+                    data.append({
+                        "Title": title,
+                        "Price": price,
+                    })
+            if 'bhp' in item:
+                print('showing results from BH Photo Video')
+                # element = driver.find_element_by_link_text("Courses")
+                action = ActionChains(driver)
+                action.click_and_hold(on_element=None)
+                for container in soup_bhp.findAll('div', {'data-selenium': ['miniProductPageProduct']},
+                                                  limit=num_results):
+                    title = container.find("span", {'data-selenium': "miniProductPageProductName"}).text
+                    price = container.find("span", {"data-selenium": "uppedDecimalPriceFirst"}).text
+                    rating = container.find("div", {"data-selenium": "miniProductPageProductRatingSection"}).text
+                    data.append({
+                        "Title": title,
+                        "Price": price,
+                        "Rating": rating
+                    })
         except Exception as e:
             print(e)
+    print(json.dumps(data, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
