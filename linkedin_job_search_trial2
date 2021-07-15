@@ -1,0 +1,54 @@
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+import requests
+from bs4 import BeautifulSoup
+from time import sleep
+from urllib.parse import urljoin
+
+
+def get_driver():
+    options = Options()
+    options.add_argument("user-data-dir=C:\\Users\\anvin\\AppData\\Local\\Google\\Chrome\\User Data")
+    path = 'C:\\Program Files (x86)\\Google\\chromedriver.exe'
+    options.add_experimental_option("detach", True)
+    driver = webdriver.Chrome(path, options=options)
+    text_search = 'Product Development Engineer'
+    location_search = 'california'
+    # base_site = 'https://www.linkedin.com/jobs'
+    base_site = 'https://www.linkedin.com/jobs/search/?f_E=3%2C4&f_JT=F&f_SB2=3&f_TPR=r604800&geoId=1020958' \
+                '87&keywords=product%20development%20engineer&location=California%2C%20United%20States&sortBy=R'
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
+            "70.0.3538.102 Safari/537.36 Edge/18.19582"}
+    driver.get(base_site)
+    parsing_job_data(driver, base_site, headers)
+
+def parsing_job_data(driver, base_site, headers):
+    company_details = ''
+    no_applications = ''
+    complete_url = ''
+    job_details = ''
+    try:
+        soup = BeautifulSoup(driver.page_source, 'lxml')
+        results = soup.find_all('div', class_="job-card-container relative job-card-list job-card-container--clickable "
+                                              "job-card-list--underline-title-on-hover jobs-search-results-list__list-"
+                                              "item--active jobs-search-two-pane__job-card-container--viewport-tracking"
+                                              "-0")
+        full_page = soup.find_all('div', {'class': 'jobs-details__main-content jobs-details__main-content--single-pane '
+                                                   'full-width'})
+        each_container = soup.findAll('li', {"class": "occludable-update"})
+        for container in each_container:
+            job_title = container.find('a', class_='disabled ember-view job-card-container__link job-card-list__title').text
+            location = container.find('li', class_='job-card-container__metadata-item').text
+            job_title = job_title.strip()
+            location = location.strip()
+            print(location)
+    except Exception as e:
+        print(e)
+
+
+if __name__ == "__main__":
+    get_driver()
