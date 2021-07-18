@@ -76,36 +76,46 @@ def parsing_job_data(driver, base_site, headers):
     new_url = driver.current_url
     response = requests.get(new_url, headers=headers).text
     soup = BeautifulSoup(driver.page_source, 'lxml')
+    pages = 2
     try:
         soup = BeautifulSoup(driver.page_source, 'lxml')
         each_container = soup.select('[class*="occludable-update"]', limit=20)
         job_element = '.jobs-search-results__list > li:nth-child({})'
+        for current_page in range(1, pages + 1):
+            for i in range(1, 26):
+                job = driver.find_element(by='css selector', value=job_element.format(i))
+                job.click()
+                sleep(1)
+                title = driver.find_element_by_xpath('/html/body/div[6]/div[3]/div[3]/div/div/section[2]/div/'
+                                                     'div/div[1]/div/div[1]/div/div[2]/a/h2').text
+                company_loc_apps = driver.find_element_by_xpath('/html/body/div[6]/div[3]/div[3]/div/div/section[2]/'
+                                                               'div/div/div[1]/div/div[1]/div/div[2]/div[1]').text
 
-        for i in range(1, 26):
-            job = driver.find_element(by='css selector', value=job_element.format(i))
-            job.click()
-            sleep(1)
-            title = driver.find_element_by_xpath('/html/body/div[6]/div[3]/div[3]/div/div/section[2]/div/'
-                                                 'div/div[1]/div/div[1]/div/div[2]/a/h2').text
-            company_loc_apps = driver.find_element_by_xpath('/html/body/div[6]/div[3]/div[3]/div/div/section[2]/'
-                                                           'div/div/div[1]/div/div[1]/div/div[2]/div[1]').text
-
-            links = driver.find_element_by_xpath('/html/body/div[6]/div[3]/div[3]/div/div/section[2]/div/div/div[1]/'
-                                                 'div/div[1]/div/div[2]/a')
-            partial_link = links.get_attribute("href")
-            complete_url = urljoin(base_site, partial_link)
-            job_details = driver.find_element_by_xpath('//*[@id="job-details"]/span').text
-            print_data(title, company_loc_apps, job_details, complete_url)
+                links = driver.find_element_by_xpath('/html/body/div[6]/div[3]/div[3]/div/div/section[2]/div/div/'
+                                                     'div[1]/div/div[1]/div/div[2]/a')
+                partial_link = links.get_attribute("href")
+                complete_url = urljoin(base_site, partial_link)
+                job_details = driver.find_element_by_xpath('//*[@id="job-details"]/span').text
+                print_data(title, company_loc_apps, job_details, complete_url)
+            print("Completed Page ", current_page, "of", pages)
+            next_page = current_page + 1
+            if next_page <= pages:
+                next_page_element = driver.find_element_by_xpath("/html/body/div[6]/div[3]/div[3]/div/div/section[1]/"
+                                                                 "div/div/section/div/ul/li["+str(next_page)+"]")
+                next_page_element.click()
+            else:
+                next_page_element = driver.find_element_by_xpath("/html/body/div[6]/div[3]/div[3]/div/div/section[1]/"
+                                                                 "div/div/section/div/ul/li["+str(current_page)+"]")
+                next_page_element.click()
     except Exception as e:
         print(e)
 
 
 
 def print_data(title, company_loc_apps, job_details, complete_url):
-    print(title.strip())
-    print(company_loc_apps.strip())
+    print(title.strip(), company_loc_apps.strip())
     print(job_details)
-    print(complete_url)
+    print(complete_url, '\n\n')
 
 
 if __name__ == "__main__":
