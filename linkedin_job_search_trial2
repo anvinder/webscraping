@@ -19,8 +19,6 @@ def get_driver():
     text_search = 'Product Development Engineer'
     location_search = 'california'
     base_site = 'https://www.linkedin.com/jobs'
-    # base_site = 'https://www.linkedin.com/jobs/search/?currentJobId=2630799915&f_E=2%2C3%2C4&f_JT=F&f_SB2=3&f_TPR=r60
-    # 4800&geoId=102095887&keywords=product%20development%20engineer&location=California%2C%20United%20States&sortBy=R'
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
             "70.0.3538.102 Safari/537.36 Edge/18.19582"}
     driver.get(base_site)
@@ -77,6 +75,7 @@ def parsing_job_data(driver, base_site, headers):
     response = requests.get(new_url, headers=headers).text
     soup = BeautifulSoup(driver.page_source, 'lxml')
     pages = 2
+    write_file = open('linkedin_result.txt', 'a+', encoding='utf-8')
     try:
         soup = BeautifulSoup(driver.page_source, 'lxml')
         each_container = soup.select('[class*="occludable-update"]', limit=20)
@@ -97,6 +96,11 @@ def parsing_job_data(driver, base_site, headers):
                 complete_url = urljoin(base_site, partial_link)
                 job_details = driver.find_element_by_xpath('//*[@id="job-details"]/span').text
                 print_data(title, company_loc_apps, job_details, complete_url)
+                write_file.writelines([title.strip(), ' AT ', company_loc_apps.strip(), ' ', '\n',job_details, '\n', complete_url, '\n'])
+                write_file.writelines(['****************************************************************************\n'])
+            write_file.writelines(["Completed Page ", str(current_page), "of", str(pages)])
+            write_file.writelines(['****************************************************************************\n'])
+            write_file.writelines('\n\n')
             print("Completed Page ", current_page, "of", pages)
             next_page = current_page + 1
             if next_page <= pages:
@@ -113,11 +117,11 @@ def parsing_job_data(driver, base_site, headers):
 
 
 def print_data(title, company_loc_apps, job_details, complete_url):
+    
     print(title.strip(), company_loc_apps.strip())
-    print(job_details)
-    print(complete_url, '\n\n')
+    #print(job_details)
+    print(complete_url, '\n')
 
 
 if __name__ == "__main__":
     get_driver()
-
