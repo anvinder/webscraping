@@ -1,0 +1,130 @@
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+import requests
+from bs4 import BeautifulSoup
+from time import sleep
+from urllib.parse import urljoin
+
+
+class Linkedin_Job_Hunt:
+    def __init__(self, position, location):
+        self.text_search = position
+        self.location_search = location
+    def get_driver(self):
+        options = Options()
+        options.add_argument("user-data-dir=C:\\Users\\anvin\\AppData\\Local\\Google\\Chrome\\User Data")
+        path = 'C:\\Program Files (x86)\\Google\\chromedriver.exe'
+        options.add_experimental_option("detach", True)
+        driver = webdriver.Chrome(path, options=options)
+
+        base_site = 'https://www.linkedin.com/jobs'
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
+                "70.0.3538.102 Safari/537.36 Edge/18.19582"}
+        driver.get(base_site)
+        li.enter_title_location(driver, self.text_search, self.location_search)
+        li.filter_jobs(driver)
+        li.parsing_job_data(driver, base_site, headers)
+
+
+    def enter_title_location(self, driver, text_search, location_search):
+        search_bars = driver.find_elements_by_class_name('jobs-search-box__text-input')
+        search_keywords = search_bars[0]    # to enter job title
+        # search_bars.clear()
+        search_keywords.send_keys(text_search)
+        sleep(1)
+        search_location = search_bars[3]    # To enter location
+        search_location.clear()
+        search_location.send_keys(location_search)
+        sleep(1)
+        search_location.send_keys(Keys.RETURN)  # Hit Enter after entering title and location.
+
+
+    def filter_jobs(self, driver):
+        WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="search-reusables__filters-'
+                                                                              'bar"]/div/div'))).click()   # All Filters
+        sleep(3)
+        past_week = '/html/body/div[3]/div/div/div[2]/ul/li[2]/fieldset/div/ul/li[3]/label/p/span'
+        past_week = driver.find_element(by='xpath', value=past_week)
+        past_week.click()
+        experience_entry_level = '/html/body/div[3]/div/div/div[2]/ul/li[3]/fieldset/div/ul/li[2]/label/p/span'
+        experience_associate_level = '/html/body/div[3]/div/div/div[2]/ul/li[3]/fieldset/div/ul/li[3]/label/p/span'
+        experience_mid_senior_level = '/html/body/div[3]/div/div/div[2]/ul/li[3]/fieldset/div/ul/li[4]/label/p/span'
+        entry_job_type = driver.find_element(by='xpath', value=experience_entry_level)
+        associate_job_type = driver.find_element(by='xpath', value=experience_associate_level)
+        mid_senior_job_type = driver.find_element(by='xpath', value=experience_mid_senior_level)
+        entry_job_type.click()
+        associate_job_type.click()
+        mid_senior_job_type.click()
+        job_type = '/html/body/div[3]/div/div/div[2]/ul/li[5]/fieldset/div/ul/li[1]/label/p/span'
+        job_type = driver.find_element(by='xpath', value=job_type)
+        job_type.click()
+        salary = '/html/body/div[3]/div/div/div[2]/ul/li[15]/fieldset/div/ul/li[3]/label/p/span'
+        salary = driver.find_element(by='xpath', value=salary)
+        salary.click()
+        sleep(1)
+        driver.find_element_by_xpath('/html/body/div[3]/div/div/div[3]/div/button[2]').click()  # If filter(show results)
+
+
+    def parsing_job_data(self, driver, base_site, headers):
+        new_url = driver.current_url
+        response = requests.get(new_url, headers=headers).text
+        soup = BeautifulSoup(driver.page_source, 'lxml')
+        pages = 2
+        write_file = open('linkedin_result.txt', 'a+', encoding='utf-8')
+        try:
+            soup = BeautifulSoup(driver.page_source, 'lxml')
+            each_container = soup.select('[class*="occludable-update"]', limit=20)
+            job_element = '.jobs-search-results__list > li:nth-child({})'
+            for current_page in range(1, pages + 1):
+                for i in range(1, 26):
+                    job = driver.find_element(by='css selector', value=job_element.format(i))
+                    job.click()
+                    sleep(1)
+                    title = driver.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div/div/section[2]/div/'
+                                                         'div/div[1]/div/div[1]/div/div[2]/a/h2').text
+                    company_loc_apps = driver.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div/div/section[2]/'
+                                                                   'div/div/div[1]/div/div[1]/div/div[2]/div[1]').text
+
+                    links = driver.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div/div/section[2]/div/div/'
+                                                         'div[1]/div/div[1]/div/div[2]/a')
+                    partial_link = links.get_attribute("href")
+                    complete_url = urljoin(base_site, partial_link)
+                    job_details = driver.find_element_by_xpath('//*[@id="job-details"]/span').text
+                    li.print_data(title, company_loc_apps, job_details, complete_url)
+                    write_file.writelines([title.strip(), ' AT ', company_loc_apps.strip(), ' ', '\n', job_details, '\n', complete_url, '\n'])
+                    write_file.writelines(['****************************************************************************\n'])
+                write_file.writelines(["Completed Page ", str(current_page), "of", str(pages)])
+                write_file.writelines(['****************************************************************************\n'])
+                write_file.writelines('\n\n')
+                print("Completed Page ", current_page, "of", pages)
+                next_page = current_page + 1
+                if next_page <= pages:
+                    next_page_element = driver.find_element_by_xpath("/html/body/div[5]/div[3]/div[3]/div/div/section[1]/"
+                                                                     "div/div/section/div/ul/li["+str(next_page)+"]")
+                    next_page_element.click()
+                else:
+                    next_page_element = driver.find_element_by_xpath("/html/body/div[5]/div[3]/div[3]/div/div/section[1]/"
+                                                                     "div/div/section/div/ul/li["+str(current_page)+"]")
+                    next_page_element.click()
+        except Exception as e:
+            print(e)
+
+
+
+    def print_data(self, title, company_loc_apps, job_details, complete_url):
+
+        print(title.strip(), company_loc_apps.strip())
+        #print(job_details)
+        print(complete_url, '\n')
+
+
+if __name__ == "__main__":
+    title = 'Product Development Engineer'
+    loc = 'California'
+    li = Linkedin_Job_Hunt(title, loc)
+    li.get_driver()
+
