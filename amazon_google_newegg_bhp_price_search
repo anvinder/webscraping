@@ -128,3 +128,4 @@ def show_results(soup_google, soup_amazon, soup_newegg, soup_bhp, driver):
 
 if __name__ == "__main__":
     basic_setup()
+
