@@ -127,4 +127,4 @@ if __name__ == "__main__":
     loc = 'California'
     li = Linkedin_Job_Hunt(title, loc)
     li.get_driver()
-\
+
