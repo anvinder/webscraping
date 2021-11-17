@@ -119,3 +119,4 @@ def print_data(company_details, no_applications, complete_url, job_details):
 
 if __name__ == "__main__":
     get_driver()
+    
