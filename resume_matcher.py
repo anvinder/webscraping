@@ -2,7 +2,7 @@ import docx2txt
 import re
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-path = "C:\\Users\\anvin\\PycharmProjects\\beautifulsoup_udemy"
+path = "C:\\Users\\xx\\PycharmProjects\\beautifulsoup_udemy"
 
 class linkedin_resume:
     def __init__(self):
