@@ -20,7 +20,7 @@ class linkedin_resume:
         self.line_temp = ''
         self.temp_list_line_numbers = []
         self.single_string = ''
-        self.position_regex = re.compile(' (.*)AT')
+        self.position_regex = re.compile('(.*)AT')
         self.position = ''
         self.company_regex = re.compile('AT (.*),')
         self.company = ''
@@ -28,7 +28,7 @@ class linkedin_resume:
 
     def count_jd_in_result_file(self):
         for line_no, line in enumerate(self.jd_result_file):
-            if line.startswith("#"):
+            if line.startswith("##"):
                 temp_line = next(self.jd_result_file)
                 match_position = self.position_regex.search(temp_line)
                 match_company_loc = self.company_regex.search(temp_line)
@@ -82,9 +82,11 @@ class linkedin_resume:
                     print(len(xlines))
                     ylines = yh.readlines()
                     for i in range(len(xlines)):
-                        line = xlines[i].strip() + ' ' + ylines[i]
-                        zh.write(line)
-
+                        try:
+                            line = xlines[i].strip() + ' ' + ylines[i]
+                            zh.write(line)
+                        except:
+                            continue
         self.jd_result_file.close()
         self.result_file.close()
         self.match_file.close()
