@@ -1,5 +1,7 @@
 import docx2txt
 import re
+import os
+from pathlib import Path
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 path = "C:\\Users\\xx\\PycharmProjects\\beautifulsoup_udemy"
@@ -9,9 +11,29 @@ class linkedin_resume:
         self.count_total_jd = 0
         self.read_file = "linkedin_result.txt"
         self.jd_result_file = open("linkedin_result.txt", 'r', errors='ignore', encoding='utf-8')
-        self.result_file = open("parsed_search_result.txt", 'r+', errors='ignore', encoding='utf-8')
-        self.match_file = open("match_result.txt", 'r+', errors='ignore', encoding='utf-8')
-        self.final_result_file = open("Final_parsed_search_result.txt", 'w', errors='ignore', encoding='utf-8')
+        # self.result_file = open("parsed_search_result.txt", 'r+', errors='ignore', encoding='utf-8')
+        if os.path.isfile('parsed_search_result.txt'):
+            self.result_file = open("parsed_search_result.txt", 'r+', errors='ignore', encoding='utf-8')
+        else:
+            Path('parsed_search_result.txt').touch()
+            self.result_file = open("parsed_search_result.txt", 'r+', errors='ignore', encoding='utf-8')
+
+
+        # self.match_file = open("match_result.txt", 'r+', errors='ignore', encoding='utf-8')
+        if os.path.isfile('match_result.txt'):
+            self.match_file = open("match_result.txt", 'r+', errors='ignore', encoding='utf-8')
+        else:
+            Path('match_result.txt').touch()
+            self.match_file = open("match_result.txt", 'r+', errors='ignore', encoding='utf-8')
+
+        # self.final_result_file = open("Final_parsed_search_result.txt", 'r+', errors='ignore', encoding='utf-8')
+        if os.path.isfile('Final_parsed_search_result.txt'):
+            pass
+            #self.final_result_file = open("Final_parsed_search_result.txt", 'r+', errors='ignore', encoding='utf-8')
+        else:
+            Path('Final_parsed_search_result.txt').touch()
+            #self.final_result_file = open("Final_parsed_search_result.txt", 'r+', errors='ignore', encoding='utf-8')
+
         self.resume = docx2txt.process("resume4.docx")
         self.list_hash = []
         self.list_http = []
@@ -77,10 +99,11 @@ class linkedin_resume:
 
         with open("parsed_search_result.txt") as xh:
             with open('match_result.txt') as yh:
-                with open("Final_parsed_search_result.txt", "w") as zh:
+                with open("Final_parsed_search_result.txt", 'w') as zh:
                     xlines = xh.readlines()
                     print(len(xlines))
                     ylines = yh.readlines()
+                    print(len(ylines))
                     for i in range(len(xlines)):
                         try:
                             line = xlines[i].strip() + ' ' + ylines[i]
@@ -90,7 +113,7 @@ class linkedin_resume:
         self.jd_result_file.close()
         self.result_file.close()
         self.match_file.close()
-        self.final_result_file.close()
+        #self.final_result_file.close()
 
 
 def main_func():
