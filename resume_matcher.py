@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-path = "C:\\Users\\xx\\PycharmProjects\\beautifulsoup_udemy"
+path = "C:\\Users\\xyz\\PycharmProjects\\beautifulsoup_udemy"
 
 class linkedin_resume:
     def __init__(self):
@@ -32,7 +32,7 @@ class linkedin_resume:
             #self.final_result_file = open("Final_parsed_search_result.txt", 'r+', errors='ignore', encoding='utf-8')
         else:
             Path('Final_parsed_search_result.txt').touch()
-            #self.final_result_file = open("Final_parsed_search_result.txt", 'r+', errors='ignore', encoding='utf-8')
+            #self.final_result_file = open("Final_parsed_search_result.txt", 'w+', errors='ignore', encoding='utf-8')
 
         self.resume = docx2txt.process("resume4.docx")
         self.list_hash = []
@@ -95,8 +95,10 @@ class linkedin_resume:
                 self.match_file.writelines([str(matchPercentage) + "% ", "\n"])
                 print("Resume Match " + str(matchPercentage) + "% ")
                 self.temp_list_line_numbers.clear()
-        num_lines = self.result_file.read().count('\n')
+        # num_lines = self.result_file.read().count('\n')
 
+        self.result_file.seek(0)
+        self.match_file.seek(0)
         with open("parsed_search_result.txt") as xh:
             with open('match_result.txt') as yh:
                 with open("Final_parsed_search_result.txt", 'w') as zh:
@@ -104,17 +106,19 @@ class linkedin_resume:
                     print(len(xlines))
                     ylines = yh.readlines()
                     print(len(ylines))
-                    for i in range(len(xlines)):
-                        try:
-                            line = xlines[i].strip() + ' ' + ylines[i]
-                            zh.write(line)
-                        except:
-                            continue
+                    for line1, line2 in zip(ylines, xlines):
+                        zh.write("{} {}\n".format(line2.rstrip(), line1.rstrip()))
+                    # for i in range(len(xlines)):
+                    #     try:
+                    #         line = xlines[i].strip() + ' ' + ylines[i]
+                    #         zh.write(line)
+                    #     except:
+                    #         continue
         self.jd_result_file.close()
         self.result_file.close()
         self.match_file.close()
-        #self.final_result_file.close()
-
+        # self.final_result_file.close()
+        zh.close()
 
 def main_func():
     obj_linkedin_resume = linkedin_resume()
